@@ -82,8 +82,88 @@ async function getAllOrders(){
   return results;
 }
 
+async function deleteOrder(orderId){
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    await connection.query(
+      'DELETE FROM Items WHERE orderId = ?',
+      [orderId]
+    );
+    const [orderDeleted] = await connection.query(
+      'DELETE FROM Orders WHERE orderId = ?',
+      [orderId]
+    )
+
+    await connection.commit();
+
+    return orderDeleted.affectedRows;
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  }
+}
+
+async function updateOrder(orderId, items){
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [orderRows] = await connection.query(
+      'SELECT orderId FROM Orders WHERE orderId = ?',
+      [orderId]
+    );
+
+    if (orderRows.length === 0) {
+      await connection.rollback();
+      return { orderNotFound: true };
+    }
+
+    for (const item of items){
+      const [rows] = await connection.query(
+        'SELECT quantity, price FROM Items WHERE orderId = ? AND productId =?',
+        [orderId, item.productId] 
+      )
+
+      if (rows.length === 0){
+        await connection.rollback();
+        return { itemNotFound: item.productId }
+      }
+
+      await connection.query(
+        'UPDATE Items SET quantity=?, price=? WHERE orderId =? AND productId =?',
+        [item.quantity, item.price, orderId, item.productId]
+      )
+    }
+    const [sumRows] = await connection.query(
+      'SELECT SUM(price * quantity) AS total FROM Items WHERE orderId =?',
+      [orderId]
+    )
+
+    const total = sumRows[0].total || 0;
+
+    await connection.query(
+      'UPDATE Orders SET value =? WHERE orderId =?',
+      [total, orderId]
+    )
+
+    await connection.commit();
+    return {success: true};
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally{
+    connection.release();
+  }
+}
+
 module.exports = {
   createOrder,
   getOrderById,
   getAllOrders,
+  deleteOrder,
+  updateOrder,
 };

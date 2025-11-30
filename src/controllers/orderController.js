@@ -1,4 +1,4 @@
-const { createOrder, getOrderById, getAllOrders } = require('../repositories/orderRepository');
+const { createOrder, getOrderById, getAllOrders, deleteOrder, updateOrder } = require('../repositories/orderRepository');
 const { mapRequestToOrderModel } = require('../services/orderMapper');
 
 async function createOrderHandler(req, res) {
@@ -26,13 +26,13 @@ async function getOrderHandler(req, res) {
         const orderId = req.params.orderId;
 
         if (!orderId) {
-        return res.status(400).json({ message: 'Parâmetro orderId é obrigatório' });
+          return res.status(400).json({ message: 'Parâmetro orderId é obrigatório' });
         }
 
         const order = await getOrderById(orderId);
 
         if (!order) {
-        return res.status(404).json({ message: 'Pedido não encontrado' });
+          return res.status(404).json({ message: 'Pedido não encontrado' });
         }
 
         // Se você quiser, pode remapear de volta para o formato da API (numeroPedido, etc.)
@@ -49,12 +49,58 @@ async function getAllOrdersHandler(req, res){
         return res.status(200).json(orders);
     } catch (err) {
        console.error('Erro ao buscar pedido:', err);
-        return res.status(500).json({ message: 'Erro interno ao buscar pedido' }); 
+      return res.status(500).json({ message: 'Erro interno ao buscar pedido' }); 
     }
+}
+
+async function deleteOrderHandler(req, res){
+  try {
+    const orderId = req.params.orderId;
+
+    if (!orderId) {
+      return res.status(400).json({ message: 'Parâmetro orderId é obrigatório' });
+    }
+
+    const deleted = await deleteOrder(orderId);
+
+    if(deleted === 0) return res.status(404).json({message: 'Pedido não existe no banco de dados'})
+    return res.status(200).json({message: 'Pedido removido com sucesso'});
+  } catch (err) {
+    console.error('Erro ao deletar pedido', err);
+    return res.status(500).json({ message: 'Erro interno ao buscar pedido' }); 
+  }
+}
+
+async function updateOrderHandler(req, res){
+  // const body = req.body;
+
+  // if (!body || !Array.isArray(body.items) || body.items.length === 0) {
+  //   return res.status(400).json({ message: 'É necessário enviar ao menos um item' });
+  // }
+
+  const itemsModel = req.body.items.map((i) =>({
+    productId: i.productId ?? i.idItem,
+    quantity: i.quantity ?? i.quantidadeItem,
+    price: i.price ?? i.valorItem,
+  }));
+
+  const result = await updateOrder(req.params.orderId, itemsModel);
+
+  if (result.orderNotFound) {
+    return res.status(404).json({ message: "Pedido não existe" });
+  }
+
+  if (result.itemNotFound) {
+    return res.status(400).json({ message: `Item ${result.itemNotFound} não existe neste pedido` });
+  }
+
+  return res.status(200).json({ message: "Itens atualizados com sucesso" });
 }
 
 module.exports = {
   createOrderHandler,
   getOrderHandler,
   getAllOrdersHandler,
+  deleteOrderHandler,
+  updateOrderHandler
 };
