@@ -1,49 +1,60 @@
-const { createOrder, getOrderById } = require('../repositories/orderRepository');
+const { createOrder, getOrderById, getAllOrders } = require('../repositories/orderRepository');
 const { mapRequestToOrderModel } = require('../services/orderMapper');
 
 async function createOrderHandler(req, res) {
-  try {
-    const body = req.body;
+    try {
+        const body = req.body;
 
-    if (!body.numeroPedido || !body.valorTotal || !body.dataCriacao || !Array.isArray(body.items)) {
-      return res.status(400).json({ message: 'Payload inválido' });
-    }
+        if (!body.numeroPedido || !body.valorTotal || !body.dataCriacao || !Array.isArray(body.items)) {
+        return res.status(400).json({ message: 'Payload inválido' });
+        }
 
-    const orderModel = mapRequestToOrderModel(body);
+        const orderModel = mapRequestToOrderModel(body);
 
-    await createOrder(orderModel);
+        await createOrder(orderModel);
 
-    // você pode devolver o modelo do banco ou algo mais customizado
-    return res.status(201).json(orderModel);
+        // você pode devolver o modelo do banco ou algo mais customizado
+        return res.status(201).json(orderModel);
   } catch (err) {
-    console.error('Erro ao criar pedido:', err);
-    return res.status(500).json({ message: 'Erro interno ao criar pedido' });
+        console.error('Erro ao criar pedido:', err);
+        return res.status(500).json({ message: 'Erro interno ao criar pedido' });
   }
 }
 
 async function getOrderHandler(req, res) {
   try {
-    const orderId = req.params.orderId;
+        const orderId = req.params.orderId;
 
-    if (!orderId) {
-      return res.status(400).json({ message: 'Parâmetro orderId é obrigatório' });
-    }
+        if (!orderId) {
+        return res.status(400).json({ message: 'Parâmetro orderId é obrigatório' });
+        }
 
-    const order = await getOrderById(orderId);
+        const order = await getOrderById(orderId);
 
-    if (!order) {
-      return res.status(404).json({ message: 'Pedido não encontrado' });
-    }
+        if (!order) {
+        return res.status(404).json({ message: 'Pedido não encontrado' });
+        }
 
-    // Se você quiser, pode remapear de volta para o formato da API (numeroPedido, etc.)
-    return res.status(200).json(order);
+        // Se você quiser, pode remapear de volta para o formato da API (numeroPedido, etc.)
+        return res.status(200).json(order);
   } catch (err) {
-    console.error('Erro ao buscar pedido:', err);
-    return res.status(500).json({ message: 'Erro interno ao buscar pedido' });
+        console.error('Erro ao buscar pedido:', err);
+        return res.status(500).json({ message: 'Erro interno ao buscar pedido' });
   }
+}
+
+async function getAllOrdersHandler(req, res){
+    try {
+        const orders = await getAllOrders();
+        return res.status(200).json(orders);
+    } catch (err) {
+       console.error('Erro ao buscar pedido:', err);
+        return res.status(500).json({ message: 'Erro interno ao buscar pedido' }); 
+    }
 }
 
 module.exports = {
   createOrderHandler,
   getOrderHandler,
+  getAllOrdersHandler,
 };
