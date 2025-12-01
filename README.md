@@ -92,4 +92,4 @@ body:
 DELETE `/order/:orderId`
 
 - Se o pedido não existir, retorna `404`.
-- Se remover com sucesso, retorna `200`.
+- Se remover com sucesso, retorna `204`.
