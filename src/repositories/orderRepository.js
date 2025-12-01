@@ -5,13 +5,11 @@ async function createOrder(order) {
   try {
     await connection.beginTransaction();
 
-    // insere na tabela Order
     await connection.query(
       'INSERT INTO Orders (orderId, value, creationDate) VALUES (?, ?, ?)',
       [order.orderId, order.value, order.creationDate]
     );
 
-    // insere itens na tabela Items
     const itemsValues = order.items.map((item) => [
       order.orderId,
       item.productId,
@@ -34,57 +32,72 @@ async function createOrder(order) {
 }
 
 async function getOrderById(orderId) {
-  const [orderRows] = await db.query(
-    'SELECT orderId, value, creationDate FROM Orders WHERE orderId = ?',
-    [orderId]
-  );
-
-  if (orderRows.length === 0) return null;
-
-  const order = orderRows[0];
-
-  const [itemsRows] = await db.query(
-    'SELECT productId, quantity, price FROM Items WHERE orderId = ?',
-    [orderId]
-  );
-
-  return {
-    orderId: order.orderId,
-    value: order.value,
-    creationDate: order.creationDate,
-    items: itemsRows,
-  };
-}
-
-async function getAllOrders(){
-  const [orderRows] = await db.query(
-    'SELECT orderId, value, creationDate FROM Orders'
-  );
-
-  if (orderRows.length === 0) return null;
-
-  const results = [];
-
-  for (const row of orderRows) {
-    const [itemsRows] = await db.query(
-      'SELECT productId, quantity, price FROM Items WHERE orderId = ?',
-      [row.orderId]
+  const connection = await db.getConnection();
+  try {
+    const [orderRows] = await db.query(
+      'SELECT orderId, value, creationDate FROM Orders WHERE orderId = ?',
+      [orderId]
     );
 
-    results.push({
-      orderId: row.orderId,
-      value: row.value,
-      creationDate: row.creationDate,
-      items: itemsRows,
-    });
-  }
+    if (orderRows.length === 0) return null;
 
-  return results;
+    const order = orderRows[0];
+
+    const [itemsRows] = await db.query(
+      'SELECT productId, quantity, price FROM Items WHERE orderId = ?',
+      [orderId]
+    );
+
+    return {
+      orderId: order.orderId,
+      value: order.value,
+      creationDate: order.creationDate,
+      items: itemsRows,
+    };
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
 }
 
-async function deleteOrder(orderId){
+async function getAllOrders() {
   const connection = await db.getConnection();
+  try {
+    const [orderRows] = await db.query(
+      'SELECT orderId, value, creationDate FROM Orders'
+    );
 
+    if (orderRows.length === 0) return null;
+
+    const results = [];
+
+    for (const row of orderRows) {
+      const [itemsRows] = await db.query(
+        'SELECT productId, quantity, price FROM Items WHERE orderId = ?',
+        [row.orderId]
+      );
+
+      results.push({
+        orderId: row.orderId,
+        value: row.value,
+        creationDate: row.creationDate,
+        items: itemsRows,
+      });
+    }
+
+    return results;
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
+async function deleteOrder(orderId) {
+  const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
 
@@ -98,17 +111,17 @@ async function deleteOrder(orderId){
     )
 
     await connection.commit();
-
     return orderDeleted.affectedRows;
   } catch (err) {
     await connection.rollback();
     throw err;
+  } finally {
+    connection.release();
   }
 }
 
-async function updateOrder(orderId, items){
+async function updateOrder(orderId, items) {
   const connection = await db.getConnection();
-
   try {
     await connection.beginTransaction();
 
@@ -138,13 +151,13 @@ async function updateOrder(orderId, items){
         [item.quantity, item.price, orderId, item.productId]
       )
     }
+
     const [sumRows] = await connection.query(
       'SELECT SUM(price * quantity) AS total FROM Items WHERE orderId =?',
       [orderId]
     )
 
     const total = sumRows[0].total || 0;
-
     await connection.query(
       'UPDATE Orders SET value =? WHERE orderId =?',
       [total, orderId]
