@@ -21,6 +21,29 @@ CREATE TABLE Items (
   FOREIGN KEY (orderId) REFERENCES Orders(orderId)
 );
 ```
+
+# Melhorias futuras (o que eu implementaria com mais tempo)
+
+- **Autenticação e autorização**
+    A API atualmente é aberta, mas o PDF cita autenticação como um recurso adicional opcional.
+    Eu adicionaria: login com token JWT, expiração e renovação de tokens e controle de acesso baseado em perfis.
+- **Validações mais detalhadas nos payloads**
+    Hoje existem validações básicas no controller, mas com mais tempo eu aplicaria validação campo a campo com mensagens específicas.
+    Isso deixaria a API mais robusta e evitaria falhas silenciosas.
+- **Testes**
+    Testes unitários nos repositories, testes da regra de negócio e teste end-to-end simulando as chamadas HTTP
+
+# O que já foi implementado no projeto
+
+Mesmo com o escopo limitado, já apliquei:
+- CRUD completo.
+- Mapeamento de resposta retornando em um formato mais amigável.
+- Uso de transações ACID no MySQL (`BEGIN`, `COMMIT`, `ROLLBACK`)
+- Separação clara entre controller, repositories, mappers, routes, configs, database
+- Documentação via SWAGGER em `/api-docs`
+- Recálculo automático do valor do pedido; Remoção do pedido com regras consistentes; Atualização parcial de itens com transação e rollback;
+- Padronização de status codes
+
 # Instalação e como rodar
 
 ```
