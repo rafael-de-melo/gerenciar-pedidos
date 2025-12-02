@@ -1,7 +1,6 @@
 # Gerenciar Pedidos - API em Node.js
 
 API REST para cadastro e gerenciamento de pedidos, desenvolvida em Node.js com Express e MySQL.
-
 Stack: Node.js, Express, MySQL, Nodemom (ambiente dev)
 
 Modelo de dados:
@@ -21,6 +20,27 @@ CREATE TABLE Items (
   PRIMARY KEY (orderId, productId),
   FOREIGN KEY (orderId) REFERENCES Orders(orderId)
 );
+```
+# Instalação e como rodar
+
+```
+npm install --save-dev nodemon
+```
+no `package.json`:
+```
+"scripts": {
+  "dev": "nodemon index.js"
+}
+```
+
+arquivo `.env` na raiz:
+```
+DB_HOST=localhost
+DB_USER=seu_usuario
+DB_PASSWORD=sua_senha
+DB_NAME=gerenciar_pedidos
+
+APP_PORT=3000
 ```
 
 # Endpoints 
@@ -43,7 +63,7 @@ body:
 
 GET `/order/:orderId`
 
-- Se o pedido não existir, retorna 404.
+- Se o pedido não existir, retorna `404`.
 
 **3. Listar todos os pedidos**
 
@@ -53,9 +73,10 @@ GET `/orders`
 
 PUT `/order/:orderId`
 
-- Se o pedido não existir, retorna 404.
-- Se algum item não existir no pedido, rollback e retorna 404.
+- Se o pedido não existir, retorna `404`.
+- Se algum item não existir no pedido, rollback e retorna `400`.
 - Só atualiza os itens enviados no body, os não enviados são ignorados.
+-  Atualiza o `value` do pedido somando os `price` de cada item. Nunca atualiza a `creationDate`
 
 ```
 body:
@@ -70,5 +91,5 @@ body:
 
 DELETE `/order/:orderId`
 
-- Se o pedido não existir, retorna 404.
-- Se remover com sucesso, retorna 200.
+- Se o pedido não existir, retorna `404`.
+- Se remover com sucesso, retorna `204`.
