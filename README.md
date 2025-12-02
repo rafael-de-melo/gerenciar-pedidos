@@ -25,12 +25,15 @@ CREATE TABLE Items (
 # Melhorias futuras (o que eu implementaria com mais tempo)
 
 - **Autenticação e autorização**
+
     A API atualmente é aberta, mas o PDF cita autenticação como um recurso adicional opcional.
     Eu adicionaria: login com token JWT, expiração e renovação de tokens e controle de acesso baseado em perfis.
 - **Validações mais detalhadas nos payloads**
+
     Hoje existem validações básicas no controller, mas com mais tempo eu aplicaria validação campo a campo com mensagens específicas.
     Isso deixaria a API mais robusta e evitaria falhas silenciosas.
 - **Testes**
+
     Testes unitários nos repositories, testes da regra de negócio e teste end-to-end simulando as chamadas HTTP
 
 # O que já foi implementado no projeto
